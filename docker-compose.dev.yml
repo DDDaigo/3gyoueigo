@@ -1,0 +1,48 @@
+services:
+  # 1. バックエンド (Flask) - 開発モード
+  backend:
+    build: 
+      context: ./backend
+      target: development # Dockerfile内で開発用ステージを使用
+    ports:
+      - "5000:5000" # Flaskのポートを直接公開
+    volumes:
+      - ./backend:/app # ★ローカルコードをマウント（ホットリロード用）
+    environment:
+      - FLASK_ENV=development # 開発モード有効化
+      - DATABASE_URL=postgresql://user:password@db:5432/3gyou_dev_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}      
+      - OAUTHLIB_INSECURE_TRANSPORT=1    
+      
+  # 2. フロントエンド (Vue.js) - 開発モード
+  frontend:
+    build:
+      context: ./frontend
+      target: development # Dockerfile内で開発用ステージを使用
+    ports:
+      - "8081:8080" # Vue dev-serverのポートを直接公開
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # ホストOSのnode_modulesを上書きしない
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+      - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+    depends_on:
+      - backend
+
+  # 3. データベース (PostgreSQL) - ローカル専用
+  db:
+    image: postgres:15-alpine
+    container_name: dev_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: 3gyou_dev_db
+    volumes:
+      - dev_db_data:/var/lib/postgresql/data # ローカル用ボリューム
+
+volumes:
+  dev_db_data:

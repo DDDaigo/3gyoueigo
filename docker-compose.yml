@@ -1,0 +1,48 @@
+services:
+  # 1. バックエンド (Flask)
+  backend:
+    build: ./backend
+    container_name: 3gyou-backend
+    restart: always
+    environment:
+      # ホスト名はインフラ側のサービス名 "pg" になります
+      # パスワードは infra-compose.yml の PG_ROOT_PASSWORD と合わせる必要があります
+      - DATABASE_URL=postgresql://postgres:${PG_ROOT_PASSWORD}@pg:5432/3gyou_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      # Google Loginの設定など
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    networks:
+      - webnet  # Traefik経由でアクセスされるため
+      - dbnet   # DBにアクセスするため
+    labels:
+      - "traefik.enable=true"
+      # API用ルーティング
+      - "traefik.http.routers.3gyou-backend.rule=Host(`3gyoueigo.backsd.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.3gyou-backend.entrypoints=websecure"
+      - "traefik.http.routers.3gyou-backend.tls=true"
+      - "traefik.http.routers.3gyou-backend.tls.certresolver=cf" 
+      # ↑ infra-composeで定義したresolver名 "cf" を指定
+
+  # 2. フロントエンド (Vue.js)
+  frontend:
+    build: ./frontend
+    container_name: 3gyou-frontend
+    restart: always
+    networks:
+      - webnet
+    labels:
+      - "traefik.enable=true"
+      # メインルーティング
+      - "traefik.http.routers.3gyou-frontend.rule=Host(`3gyoueigo.backsd.com`)"
+      - "traefik.http.routers.3gyou-frontend.entrypoints=websecure"
+      - "traefik.http.routers.3gyou-frontend.tls=true"
+      - "traefik.http.routers.3gyou-frontend.tls.certresolver=cf"
+
+# 既存のネットワークを利用する設定
+networks:
+  webnet:
+    external: true
+  dbnet:
+    external: true

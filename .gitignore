@@ -1,0 +1,29 @@
+# --- 全体共通 ---
+.DS_Store
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+
+# --- Python / Backend (Flask) ---
+backend/__pycache__/
+backend/*.py[cod]
+backend/venv/
+backend/.venv/
+backend/.pytest_cache/
+
+# --- Node / Frontend (Vue) ---
+# frontend/.gitignore があるので基本はそちらで効きますが、
+# 念のためここにも書いておくと安心です
+frontend/node_modules/
+frontend/dist/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.idea/
+frontend/.vscode/
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
