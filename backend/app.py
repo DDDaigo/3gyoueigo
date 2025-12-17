@@ -205,6 +205,24 @@ def create_diary():
     except Exception as e:
         print(f"Error in create_diary: {e}", flush=True)
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/diaries/<int:diary_id>', methods=['DELETE'])
+@login_required
+def delete_diary(diary_id):
+    # 1. 削除対象の日記を探す
+    diary = Diary.query.get(diary_id)
+    
+    # 2. 日記がない、または他人の日記ならエラー
+    if not diary:
+        return jsonify({"error": "Diary not found"}), 404
+    if diary.user_id != current_user.id:
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    # 3. 削除実行
+    db.session.delete(diary)
+    db.session.commit()
+    
+    return jsonify({"message": "Deleted successfully"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

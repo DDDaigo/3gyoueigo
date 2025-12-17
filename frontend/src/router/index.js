@@ -1,16 +1,26 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// 先ほど作った HomeView.vue をインポート
 import HomeView from '../views/HomeView.vue'
+import LandingView from '../views/LandingView.vue' // ★LPをインポート
+import PrivacyPolicyView from '../views/PrivacyPolicyView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
+      name: 'landing',
+      component: LandingView // ★トップページはLPにする
+    },
+    {
+      path: '/app', // ★アプリ本体は /app という住所に移す
       name: 'home',
       component: HomeView
     },
-    // Aboutページなどは一旦消しておきます
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: PrivacyPolicyView
+    }    
   ]
 })
 
