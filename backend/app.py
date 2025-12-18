@@ -12,14 +12,17 @@ from datetime import datetime
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 app = Flask(__name__)
 
 # --- 設定 ---
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
 app.secret_key = "super_secret_key_for_dev"
-app.config['SESSION_COOKIE_NAME'] = 'my_app_session'
-app.config['SESSION_COOKIE_SECURE'] = False
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -28,7 +31,7 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 # CORS (Cookieを通す設定)
-CORS(app, supports_credentials=True, origins=["http://127.0.0.1:8081", "http://localhost:8081"])
+CORS(app, supports_credentials=True, origins=["https://3-line-eigo.backsd.com","http://127.0.0.1:8081", "http://localhost:8081"])
 
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 

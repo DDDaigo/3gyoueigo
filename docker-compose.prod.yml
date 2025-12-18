@@ -1,0 +1,54 @@
+services:
+  # 1. バックエンド (Flask)
+  backend:
+    build:
+      context: ./backend
+      target: production
+    container_name: 3line_backend
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OAUTHLIB_INSECURE_TRANSPORT=1
+    networks:
+      - webnet
+      - dbnet
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=webnet"
+      - "traefik.http.routers.3line-backend.rule=Host(`3-line-eigo.backsd.com`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.3line-backend.entrypoints=websecure"
+      - "traefik.http.routers.3line-backend.tls.certresolver=cf"
+      - "traefik.http.services.3line-backend.loadbalancer.server.port=5000"
+
+  # 2. フロントエンド (Vue.js)
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+      # args は削除しました（ファイル読み込み方式に変えたため）
+    container_name: 3line_frontend
+    restart: unless-stopped
+    # 実行時の環境変数は念のため残すが、ビルドには影響しない
+    environment:
+      - VITE_API_URL=https://3-line-eigo.backsd.com
+      - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    networks:
+      - webnet
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=webnet"
+      - "traefik.http.routers.3line-frontend.rule=Host(`3-line-eigo.backsd.com`)"
+      - "traefik.http.routers.3line-frontend.entrypoints=websecure"
+      - "traefik.http.routers.3line-frontend.tls.certresolver=cf"
+      - "traefik.http.services.3line-frontend.loadbalancer.server.port=80"
+
+networks:
+  webnet:
+    external: true
+  dbnet:
+    external: true

@@ -10,7 +10,7 @@ import axios from 'axios'
 
 const emit = defineEmits(['login-success'])
 // APIのURL（環境変数が読めないときのための保険で直書き）
-const api = 'http://127.0.0.1:5000'
+const api = import.meta.env.VITE_API_URL
 
 const callback = async (response) => {
   // ★ログ確認: 今度こそ "credential" が入っているはずです

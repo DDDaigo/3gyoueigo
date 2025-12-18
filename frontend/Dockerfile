@@ -1,22 +1,21 @@
-# ベースイメージ
-FROM node:20-alpine as base
-
+# --- ステージ1: ビルド環境 ---
+FROM node:22-alpine as build-stage
 WORKDIR /app
-
-# パッケージ定義をコピー
 COPY package*.json ./
 
-# --- 開発用ステージ (target: development) ---
-FROM base as development
-RUN npm install
-COPY . .
-# Viteの開発サーバー起動 (--host オプション必須)
-CMD ["npm", "run", "dev", "--", "--host"]
+# タイムアウト対策をしたインストールコマンド
+RUN npm config set fetch-retry-maxtimeout 600000 \
+    && npm config set fetch-retry-mintimeout 10000 \
+    && npm install --no-audit --network-timeout=100000
 
-# --- 本番用ステージ (target: production) ---
-FROM base as production
-RUN npm install
 COPY . .
+
+# ★★★ この行が消えていました！これが無いと動きません ★★★
 RUN npm run build
-# 本番運用時はここでNginxなどにファイルを渡す処理が入りますが、
-# いったんビルド確認用にここまでとします
+
+# --- ステージ2: 本番環境 (Nginx) ---
+FROM nginx:stable-alpine as production
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
